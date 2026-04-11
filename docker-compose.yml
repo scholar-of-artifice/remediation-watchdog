@@ -1,0 +1,11 @@
+services:
+  bashful-yak:
+    image: redis:8-alpine
+    container_name: bashful-yak
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    volumes:
+      - bashful-yak-data:/data
+volumes:
+  bashful-yak-data:
