@@ -2,13 +2,19 @@ package api
 
 import (
 	"absurd-iguana/internal/models"
-	"absurd-iguana/internal/store"
+	"context"
 	"encoding/json"
 	"net/http"
 )
 
+// EventRepository defines the behaviour required by the handler.
+// This allows for the swap with the real RedisStore for a Mock in tests.
+type EventRepository interface {
+	SaveEvent(ctx context.Context, id string, data interface{}) error
+}
+
 type Handler struct {
-	Repo *store.RedisStore
+	Repo EventRepository
 }
 
 func (h *Handler) ProduceEventHandler(w http.ResponseWriter, r *http.Request) {
