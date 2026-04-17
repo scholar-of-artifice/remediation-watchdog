@@ -34,6 +34,15 @@ func TestProduceEventHandler(t *testing.T) {
 			mockSaveErr:    nil,
 			expectedStatus: http.StatusAccepted,
 		},
+		{
+			name: "Error - missing required field",
+			requestBody: models.EventRequest{
+				ID:      "",
+				Payload: "",
+			},
+			mockSaveErr:    nil,
+			expectedStatus: http.StatusUnprocessableEntity,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
