@@ -23,6 +23,12 @@ func (h *Handler) ProduceEventHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid JSON", http.StatusBadRequest)
 		return
 	}
+	defer r.Body.Close()
+	// validate against schema
+	if err := req.Validate(); err != nil {
+		http.Error(w, err.Error(), http.StatusUnprocessableEntity)
+		return
+	}
 	//verify connection
 	err := h.Repo.SaveEvent(r.Context(), req.ID, req.Payload)
 	if err != nil {
