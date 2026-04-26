@@ -20,7 +20,7 @@ COPY . .
 RUN CGO_ENABLED=1 GOOS=linux go build -o absurd-iguana ./cmd/server/main.go
 
 # STAGE: runtime
-FROM debian:bookwork-slim
+FROM debian:bookworm-slim
 
 RUN apt-get update && apt-get install -y \
     librdkafka1 \
