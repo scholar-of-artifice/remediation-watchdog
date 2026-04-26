@@ -30,7 +30,7 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /root/
 
 # copy the binary from the builder stage
-COPY --from=builder /app/absurd-iguana .
+COPY --from=base /app/absurd-iguana .
 
 # expose the port defined in the main.go file
 EXPOSE 8080
