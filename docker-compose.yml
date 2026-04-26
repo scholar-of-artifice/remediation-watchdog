@@ -1,4 +1,13 @@
 services:
+  absurd-iguana-builder:
+    build:
+      context: ./absurd-iguana
+      dockerfile: Dockerfile
+      target: base
+    container_name: absurd-iguana-builder
+    volumes:
+      - ./absurd-iguana:/app
+    working_dir: /app
   absurd-iguana:
     build:
       context: ./absurd-iguana
