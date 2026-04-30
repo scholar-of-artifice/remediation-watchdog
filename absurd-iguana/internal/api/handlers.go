@@ -19,6 +19,8 @@ type Handler struct {
 
 func (h *Handler) ProduceEventHandler(w http.ResponseWriter, r *http.Request) {
 	var req models.EventRequest
+	// try to decode the incoming request
+	// did we get an error?
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid JSON", http.StatusBadRequest)
 		return
@@ -31,6 +33,7 @@ func (h *Handler) ProduceEventHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	//verify connection
 	err := h.Repo.SaveEvent(r.Context(), req.ID, req.Payload)
+	// did we get an error?
 	if err != nil {
 		http.Error(w, "Failed to persist to Redis", http.StatusInternalServerError)
 		return
@@ -38,6 +41,6 @@ func (h *Handler) ProduceEventHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusAccepted)
 	json.NewEncoder(w).Encode(models.EventResponse{
 		Status:  "Success",
-		Message: "Event received and persisted to Redis",
+		Message: "Event received and sent to message bus",
 	})
 }
