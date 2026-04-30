@@ -57,3 +57,18 @@ func (s *KafkaStore) Close() {
 	// close the producer
 	s.Producer.Close()
 }
+
+func (s *KafkaStore) executeEventLoop() {
+	for e := range s.Producer.Events() {
+		switch ev := e.(type) {
+		case *kafka.Message:
+			if ev.TopicPartition.Error != nil {
+				fmt.Printf("Delivery failed:\t %v \n", ev.TopicPartition.Error)
+			} else {
+				fmt.Printf("Delivered to:\t %v \n", ev.TopicPartition.Error)
+			}
+		case *kafka.Error:
+			fmt.Printf("Producer Error:\t %v \n", ev)
+		}
+	}
+}
