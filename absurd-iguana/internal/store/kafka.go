@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"time"
 
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 )
@@ -24,7 +23,7 @@ func NewKafkaStore(addr string, topic string) (*KafkaStore, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to create producer: %w", err)
 	}
-	return &KafkaStore{
+	store := &KafkaStore{
 		Producer: p,
 		Topic:    topic,
 	}
@@ -37,6 +36,7 @@ func (s *KafkaStore) SaveEvent(ctx context.Context, id string, data interface{})
 	// right now... just write directly to verify connection
 	// convert data to json
 	payload, err := json.Marshal(data)
+	// did we get an error?
 	if err != nil {
 		return fmt.Errorf("failed to marshal event: %w", err)
 	}
@@ -47,7 +47,8 @@ func (s *KafkaStore) SaveEvent(ctx context.Context, id string, data interface{})
 		Value:          payload,
 	}
 	// send the data to dazzling-remora
-	err = &s.Producer.Produce(message, nil)
+	err = s.Producer.Produce(message, nil)
+	// did we get an error?
 	if err != nil {
 		return fmt.Errorf("failed to produce message: %w", err)
 	}
@@ -56,7 +57,7 @@ func (s *KafkaStore) SaveEvent(ctx context.Context, id string, data interface{})
 
 func (s *KafkaStore) Close() {
 	// wait 15 seconds for outstanding messages to send
-	s.Producer.Flush(time.Duration(15) * time.Second)
+	s.Producer.Flush(15 * 1000)
 	// close the producer
 	s.Producer.Close()
 }
