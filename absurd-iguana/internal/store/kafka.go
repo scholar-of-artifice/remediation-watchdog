@@ -27,7 +27,10 @@ func NewKafkaStore(addr string, topic string) (*KafkaStore, error) {
 	return &KafkaStore{
 		Producer: p,
 		Topic:    topic,
-	}, nil
+	}
+	// start a background worker
+	go store.executeEventLoop()
+	return store, nil
 }
 
 func (s *KafkaStore) SaveEvent(ctx context.Context, id string, data interface{}) error {
