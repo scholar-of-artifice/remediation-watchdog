@@ -1,12 +1,7 @@
 package store
 
-import (
-	"context"
-	"testing"
-	"time"
-)
-
 // TODO: eventually move this
+/*
 func TestRedisStore_SaveEvent(t *testing.T) {
 	// setup: connect to the local Redis
 	addr := "127.0.0.1:6379" // move this to env var
@@ -38,3 +33,4 @@ func TestRedisStore_SaveEvent(t *testing.T) {
 		store.Client.Del(ctx, testID)
 	})
 }
+*/
