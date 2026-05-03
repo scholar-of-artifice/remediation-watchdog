@@ -2,12 +2,17 @@ package store
 
 import (
 	"context"
+	"os"
 	"testing"
 )
 
 func TestKafkaStore_SaveEvent(t *testing.T) {
 	// setup: connect to the local Kafka container
-	addr := "dazzling-remora:9092" // move this to env var
+	addr := os.Getenv("KAFKA_BOOTSTRAP_SERVERS")
+	if addr == "" {
+		// fallback for local development
+		addr = "localhost:9092"
+	}
 	topic := "integration-test-topic"
 	//
 	store, err := NewKafkaStore(addr, topic)
