@@ -7,8 +7,7 @@ Unit Tests verify the behaviour of individual encapsulated components (functions
 Here is how to build and run the unit tests for `absurd-iguana`.
 
 ```shell
-docker build absurd-iguana-unit-tests
-docker run absurd-iguana-unit-tests
+docker compose -f docker-compose.test.yml up --build
 ```
 
 
