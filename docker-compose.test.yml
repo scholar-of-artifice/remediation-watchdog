@@ -13,7 +13,6 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
-    restart: unless-stopped
   # ----------------
   # Ephemeral Kafka for Testing
   # ----------------
@@ -26,11 +25,11 @@ services:
       # --- KRaft config
       - KAFKA_NODE_ID=1
       - KAFKA_PROCESS_ROLES=broker,controller
-      - KAFKA_CONTROLLER_QUORUM_VOTERS=1@dazzling-remora:9093
+      - KAFKA_CONTROLLER_QUORUM_VOTERS=1@localhost:9093
       - KAFKA_CONTROLLER_LISTENER_NAMES=CONTROLLER
       # --- networking & network security
       - KAFKA_LISTENERS=PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
-      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9092
+      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://kafka-ephemeral:9092
       - KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
       - KAFKA_INTER_BROKER_LISTENER_NAME=PLAINTEXT
       # --- cluster management
@@ -42,9 +41,8 @@ services:
       - KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS=0
       - KAFKA_TRANSACTION_STATE_LOG_MIN_ISR=1
       - KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR=1
-    restart: unless-stopped
     healthcheck:
-      test: ["CMD", "kafka-topics", "--bootstrap-server", "kafka-ephemeral:9092", "--list"]
+      test: ["CMD-SHELL", /opt/kafka/bin/kafka-topics.sh", "--bootstrap-server kafka-ephemeral:9092 --list"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -70,4 +68,6 @@ services:
       kafka-ephemeral:
         condition: service_healthy
 volumes:
+  go-mod-cache:
+  go-build-cache:
   dazzling-remora-test-data:
