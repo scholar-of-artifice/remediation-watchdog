@@ -2,8 +2,7 @@
 # STAGE: base & dependency caching
 # ----------------
 # start with a large image that include the Go compiler and tools
-FROM golang:1.26.2-bookworm AS base
-
+FROM golang:1.26.2-trixie AS base
 # install build depenedencies for confluent-kafka-go
 # download the system tools.
 #   - update refreshes the list of available software
@@ -40,7 +39,7 @@ RUN CGO_ENABLED=1 GOOS=linux go build -o absurd-iguana ./cmd/server/main.go
 # ----------------
 FROM base AS test
 # run all tests in the module
-CMD ["go", "test", "-v", "./..."]
+CMD ["go", "test", "-v", "-count=1", "./..."]
 
 # ----------------
 # STAGE: lab (not deployed just running it. probably could use a better name)
