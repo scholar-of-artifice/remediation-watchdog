@@ -7,8 +7,21 @@ Unit Tests verify the behaviour of individual encapsulated components (functions
 Here is how to build and run the unit tests for `absurd-iguana`.
 
 ```shell
-docker compose -f docker-compose.test.yml up --build
+docker compose -f docker-compose.test.yml up --build --abort-on-container-exit
 ```
+
+#### What does this do?
+Build the test-stage of `absurd-iguana` Dockerfile.
+Start an ephemeral Redis and Apache Kafka cluster.
+Wait for the services to pass their healthchecks.
+Executes the `go test` command.
+Tears down all containers once the tests conclude.
+
+### How can I run tests for specific packages?
+```shell
+docker compose -f docker-compose.test.yml up --build absurd-iguana-test go test ./internal/store/...
+```
+
 
 
 ## Integration Tests
