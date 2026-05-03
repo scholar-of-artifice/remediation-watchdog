@@ -4,13 +4,14 @@ services:
   # ----------------
   redis-ephemeral:
     image: redis:8.8-m03-alpine3.23
+    container_name: redis-ephemeral
     ports:
       - "6379:6379"
     # no volume mapping means data is wiped when the container goes down
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
-      timeout: 3s
+      timeout: 5s
       retries: 5
     restart: unless-stopped
   # ----------------
@@ -18,7 +19,7 @@ services:
   # ----------------
   kafka-ephemeral:
     image: apache/kafka:4.2.1-rc1
-    container_name: dazzling-remora
+    container_name: kafka-ephemeral
     ports:
       - "9092:9092"
     environment:
@@ -42,6 +43,11 @@ services:
       - KAFKA_TRANSACTION_STATE_LOG_MIN_ISR=1
       - KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR=1
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "kafka-topics", "--bootstrap-server", "kafka-ephemeral:9092", "--list"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
   # ----------------
   # Test Runner
   # ----------------
@@ -52,71 +58,16 @@ services:
       target: test
     environment:
       # these tell the tests where to find the other services locally
-      - REDIS_ADDR=bashful-yak:6379
-      - KAFKA_BOOTSTRAP_SERVERS=dazzling-remora:9092
-  absurd-iguana-builder:
-    build:
-      context: ./absurd-iguana
-      dockerfile: Dockerfile
-      target: base
-    container_name: absurd-iguana-builder
+      - REDIS_ADDR=redis-ephemeral:6379
+      - KAFKA_BOOTSTRAP_SERVERS=kafka-ephemeral:9092
     volumes:
-      - ./absurd-iguana:/app
-    working_dir: /app
-    environment:
-      # these must match the container names defined in this file
-      - REDIS_ADDR=bashful-yak:6379
-      - KAFKA_BOOTSTRAP_SERVERS=dazzling-remora:9092
-  absurd-iguana:
-    build:
-      context: ./absurd-iguana
-      dockerfile: Dockerfile
-    container_name: absurd-iguana
-    ports:
-      - "8080:8080"
-    environment:
-      # these must match the container names defined in this file
-      - REDIS_ADDR=bashful-yak:6379
-      - KAFKA_BOOTSTRAP_SERVERS=dazzling-remora:9092
+      # map local docker volumes to Go cahces to speed up test runs
+      - go-mod-cache:/go/pkg/mod
+      - go-build-cache:/root/.cache/go-build
     depends_on:
-      - bashful-yak
-      - dazzling-remora
-  bashful-yak:
-    image: redis:8-alpine
-    container_name: bashful-yak
-    ports:
-      - "6379:6379"
-    restart: unless-stopped
-    volumes:
-      - bashful-yak-data:/data
-  dazzling-remora:
-    image: apache/kafka:4.2.1-rc1
-    container_name: dazzling-remora
-    ports:
-      - "9092:9092"
-    environment:
-      # --- KRaft config
-      - KAFKA_NODE_ID=1
-      - KAFKA_PROCESS_ROLES=broker,controller
-      - KAFKA_CONTROLLER_QUORUM_VOTERS=1@dazzling-remora:9093
-      - KAFKA_CONTROLLER_LISTENER_NAMES=CONTROLLER
-      # --- networking & network security
-      - KAFKA_LISTENERS=PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
-      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9092
-      - KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
-      - KAFKA_INTER_BROKER_LISTENER_NAME=PLAINTEXT
-      # --- cluster management
-      # for a lab... this is a hardcoded uuid... IRL this would be generated
-      - KAFKA_CLUSTER_ID=rVE0OBfpTCaoiapxc6mtGw
-      - KAFKA_LOG_DIRS=/var/lib/kafka/data
-      # --- reliability settings
-      - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1
-      - KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS=0
-      - KAFKA_TRANSACTION_STATE_LOG_MIN_ISR=1
-      - KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR=1
-    restart: unless-stopped
-    volumes:
-      - dazzling-remora-test-data:/var/lib/kafka/test/data
+      redis-ephemeral:
+        condition: service_healthy
+      kafka-ephemeral:
+        condition: service_healthy
 volumes:
-  bashful-yak-test-data:
   dazzling-remora-test-data:
