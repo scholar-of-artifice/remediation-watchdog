@@ -1,6 +1,5 @@
 # ----------------
-# STAGE: base
-# the development environment
+# STAGE: base & dependency caching
 # ----------------
 # start with a large image that include the Go compiler and tools
 FROM golang:1.26.2-bookworm AS base
@@ -37,11 +36,18 @@ COPY . .
 RUN CGO_ENABLED=1 GOOS=linux go build -o absurd-iguana ./cmd/server/main.go
 
 # ----------------
-# STAGE: runtime (probably could use a better name)
+# STAGE: testing
+# ----------------
+FROM base AS test
+# run all tests in the module
+CMD ["go", "test", "-v", "./..."]
+
+# ----------------
+# STAGE: lab (not deployed just running it. probably could use a better name)
 # ----------------
 # switch to a slim-ish version of Debian.
 # does not have go or the compiler
-FROM debian:bookworm-slim
+FROM debian:bookworm-slim as lab
 
 # install a few things:
 #   - librdkafka1: allow the compiled binary to talk to kafka when running
