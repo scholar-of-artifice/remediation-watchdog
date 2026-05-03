@@ -1,4 +1,47 @@
 services:
+  # ----------------
+  # Ephemeral Redis for Testing
+  # ----------------
+  redis-ephemeral:
+    image: redis:8.8-m03-alpine3.23
+    ports:
+      - "6379:6379"
+    # no volume mapping means data is wiped when the container goes down
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+  # ----------------
+  # Ephemeral Kafka for Testing
+  # ----------------
+  kafka-ephemeral:
+    image: apache/kafka:4.2.1-rc1
+    container_name: dazzling-remora
+    ports:
+      - "9092:9092"
+    environment:
+      # --- KRaft config
+      - KAFKA_NODE_ID=1
+      - KAFKA_PROCESS_ROLES=broker,controller
+      - KAFKA_CONTROLLER_QUORUM_VOTERS=1@dazzling-remora:9093
+      - KAFKA_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      # --- networking & network security
+      - KAFKA_LISTENERS=PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9092
+      - KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      - KAFKA_INTER_BROKER_LISTENER_NAME=PLAINTEXT
+      # --- cluster management
+      # for a lab... this is a hardcoded uuid... IRL this would be generated
+      - KAFKA_CLUSTER_ID=59286821-1D48-41B0-B520-688459636CD5
+      - KAFKA_LOG_DIRS=/var/lib/kafka/data
+      # --- reliability settings
+      - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1
+      - KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS=0
+      - KAFKA_TRANSACTION_STATE_LOG_MIN_ISR=1
+      - KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR=1
+    restart: unless-stopped
   absurd-iguana-builder:
     build:
       context: ./absurd-iguana
@@ -8,6 +51,10 @@ services:
     volumes:
       - ./absurd-iguana:/app
     working_dir: /app
+    environment:
+      # these must match the container names defined in this file
+      - REDIS_ADDR=bashful-yak:6379
+      - KAFKA_BOOTSTRAP_SERVERS=dazzling-remora:9092
   absurd-iguana:
     build:
       context: ./absurd-iguana
