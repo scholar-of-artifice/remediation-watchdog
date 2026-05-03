@@ -10,9 +10,10 @@ services:
     # no volume mapping means data is wiped when the container goes down
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 5s
+      interval: 30s
+      timeout: 30s
       retries: 5
+      start_period: 30s
   # ----------------
   # Ephemeral Kafka for Testing
   # ----------------
@@ -43,9 +44,10 @@ services:
       - KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR=1
     healthcheck:
       test: ["CMD-SHELL", /opt/kafka/bin/kafka-topics.sh", "--bootstrap-server kafka-ephemeral:9092 --list"]
-      interval: 5s
-      timeout: 5s
+      interval: 30s
+      timeout: 30s
       retries: 5
+      start_period: 30s
   # ----------------
   # Test Runner
   # ----------------
