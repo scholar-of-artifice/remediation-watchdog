@@ -64,6 +64,9 @@ COPY --from=base /app/absurd-iguana .
 
 # expose the port defined in the main.go file
 EXPOSE 8080
-
+# create a non-root user
+RUN groupadd -r watchdog && useradd -r -g watchdog watchdog
+# run the following commands as a non-root user
+USER watchdog
 # run the app once the container starts
 CMD [ "./absurd-iguana" ]
