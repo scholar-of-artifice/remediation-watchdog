@@ -1,0 +1,76 @@
+services:
+  # ----------------
+  # Ephemeral Redis for Testing
+  # ----------------
+  redis-ephemeral:
+    image: redis:8.8-m03-alpine3.23
+    container_name: redis-ephemeral
+    ports:
+      - "6379:6379"
+    # no volume mapping means data is wiped when the container goes down
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 30s
+      retries: 5
+      start_period: 30s
+  # ----------------
+  # Ephemeral Kafka for Testing
+  # ----------------
+  kafka-ephemeral:
+    image: apache/kafka:4.2.1-rc1
+    container_name: kafka-ephemeral
+    ports:
+      - "9092:9092"
+    environment:
+      # --- KRaft config
+      - KAFKA_NODE_ID=1
+      - KAFKA_PROCESS_ROLES=broker,controller
+      - KAFKA_CONTROLLER_QUORUM_VOTERS=1@localhost:9093
+      - KAFKA_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      # --- networking & network security
+      - KAFKA_LISTENERS=PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://kafka-ephemeral:9092
+      - KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      - KAFKA_INTER_BROKER_LISTENER_NAME=PLAINTEXT
+      # --- cluster management
+      # for a lab... this is a hardcoded uuid... IRL this would be generated
+      - KAFKA_CLUSTER_ID=59286821-1D48-41B0-B520-688459636CD5
+      - KAFKA_LOG_DIRS=/var/lib/kafka/data
+      # --- reliability settings
+      - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1
+      - KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS=0
+      - KAFKA_TRANSACTION_STATE_LOG_MIN_ISR=1
+      - KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR=1
+    healthcheck:
+      test: ["CMD", "/opt/kafka/bin/kafka-topics.sh", "--bootstrap-server", "kafka-ephemeral:9092", "--list"]
+      interval: 30s
+      timeout: 30s
+      retries: 5
+      start_period: 30s
+  # ----------------
+  # Test Runner
+  # ----------------
+  absurd-iguana-test:
+    container_name: absurd-iguana-test
+    build:
+      context: ./absurd-iguana
+      dockerfile: Dockerfile
+      target: test
+    environment:
+      # these tell the tests where to find the other services locally
+      - REDIS_ADDR=redis-ephemeral:6379
+      - KAFKA_BOOTSTRAP_SERVERS=kafka-ephemeral:9092
+    volumes:
+      # map local docker volumes to Go cahces to speed up test runs
+      - go-mod-cache:/go/pkg/mod
+      - go-build-cache:/root/.cache/go-build
+    depends_on:
+      redis-ephemeral:
+        condition: service_healthy
+      kafka-ephemeral:
+        condition: service_healthy
+volumes:
+  go-mod-cache:
+  go-build-cache:
+  dazzling-remora-test-data:

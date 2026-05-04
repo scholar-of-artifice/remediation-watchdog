@@ -1,4 +1,17 @@
 services:
+  absurd-iguana-builder:
+    build:
+      context: ./absurd-iguana
+      dockerfile: Dockerfile
+      target: base
+    container_name: absurd-iguana-builder
+    volumes:
+      - ./absurd-iguana:/app
+    working_dir: /app
+    environment:
+      # these must match the container names defined in this file
+      - REDIS_ADDR=bashful-yak:6379
+      - KAFKA_BOOTSTRAP_SERVERS=dazzling-remora:9092
   absurd-iguana:
     build:
       context: ./absurd-iguana

@@ -1,10 +1,8 @@
 # ----------------
-# STAGE: base
-# the development environment
+# STAGE: base & dependency caching
 # ----------------
 # start with a large image that include the Go compiler and tools
-FROM golang:1.26.2-bookworm AS base
-
+FROM golang:1.26.2-trixie AS base
 # install build depenedencies for confluent-kafka-go
 # download the system tools.
 #   - update refreshes the list of available software
@@ -37,11 +35,18 @@ COPY . .
 RUN CGO_ENABLED=1 GOOS=linux go build -o absurd-iguana ./cmd/server/main.go
 
 # ----------------
-# STAGE: runtime (probably could use a better name)
+# STAGE: testing
+# ----------------
+FROM base AS test
+# run all tests in the module
+CMD ["go", "test", "-v", "-count=1", "./..."]
+
+# ----------------
+# STAGE: lab (not deployed just running it. probably could use a better name)
 # ----------------
 # switch to a slim-ish version of Debian.
 # does not have go or the compiler
-FROM debian:bookworm-slim
+FROM debian:bookworm-slim as lab
 
 # install a few things:
 #   - librdkafka1: allow the compiled binary to talk to kafka when running
@@ -59,6 +64,9 @@ COPY --from=base /app/absurd-iguana .
 
 # expose the port defined in the main.go file
 EXPOSE 8080
-
+# create a non-root user
+RUN groupadd -r watchdog && useradd -r -g watchdog watchdog
+# run the following commands as a non-root user
+USER watchdog
 # run the app once the container starts
 CMD [ "./absurd-iguana" ]
