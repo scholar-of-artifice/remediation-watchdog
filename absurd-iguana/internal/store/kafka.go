@@ -65,17 +65,19 @@ func (s *KafkaStore) SaveEvent(ctx context.Context, id string, data interface{})
 	return nil
 }
 
-// Close flushes any pending messages to the Kafka broker and shuts down the producer
-// It allows a grace period of 15 seconds for outstanding messages to be delivered before terminating connection.
+// Close flushes any pending messages to the Kafka broker and shuts
+// down the producer. It allows a grace period of 15 seconds for
+// outstanding messages to be delivered before terminating connection.
 func (s *KafkaStore) Close() {
 	// wait 15 seconds for outstanding messages to send
 	s.Producer.Flush(15 * 1000)
-	// release underling network resources and close the producer
+	// release underlying network resources and close the producer
 	s.Producer.Close()
 }
 
 // executeEventLoop processes delviery reports and internal producer events
-// It is intended to run as a background goroutine for the duration of the store's lifecycle.
+// It is intended to run as a background goroutine for the duration of the
+// store's lifecycle.
 func (s *KafkaStore) executeEventLoop() {
 	// monitor the producer's events channel for delivery feedback and errors.
 	// it is closed when the producer is shut down via the Close() method.
