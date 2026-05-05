@@ -31,3 +31,6 @@ go.work.sum
 # .idea/
 # .vscode/
 docs/*_list.md
+
+# MacOS specific stuff
+*.DS*
